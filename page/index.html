@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Tree hates You But I do love U</title>
+<style>
+  :root{
+    --ink:#f4ecd8;
+    --leaf:#7fc36b;
+    --leaf2:#3f8b4a;
+    --bark:#5b3a22;
+    --night:#0b1a14;
+    --glow:#ffe27a;
+    --pink:#ffb3c7;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
+  html,body{height:100%;overflow:hidden;background:#000;font-family:-apple-system,"Segoe UI",Roboto,Inter,sans-serif;color:var(--ink)}
+  #app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  canvas{display:block;width:100%;height:100%;touch-action:none;background:radial-gradient(ellipse at 50% 30%, #1a3329 0%, #07120d 70%)}
+
+  /* ---------- Login ---------- */
+  #login{
+    position:absolute;inset:0;z-index:5;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:32px;text-align:center;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(255,226,122,.12), transparent 60%),
+      radial-gradient(800px 500px at 50% 110%, rgba(127,195,107,.18), transparent 60%),
+      linear-gradient(180deg,#0b1a14,#06100b);
+    overflow:hidden;
+  }
+  #login::before,#login::after{
+    content:"";position:absolute;border-radius:50%;filter:blur(60px);opacity:.4;pointer-events:none;
+  }
+  #login::before{width:300px;height:300px;background:#7fc36b;top:-80px;left:-80px;animation:float 9s ease-in-out infinite}
+  #login::after{width:260px;height:260px;background:#ffb3c7;bottom:-80px;right:-80px;animation:float 11s ease-in-out infinite reverse}
+  @keyframes float{50%{transform:translate(40px,30px)}}
+  .leaves{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  .leaf{position:absolute;font-size:22px;opacity:.7;animation:fall linear infinite}
+  @keyframes fall{
+    0%{transform:translateY(-10vh) rotate(0)}
+    100%{transform:translateY(110vh) rotate(540deg)}
+  }
+  .title{
+    font-family:Georgia,"Playfair Display",serif;
+    font-size:clamp(28px,7vw,46px);
+    line-height:1.15;letter-spacing:.5px;
+    color:#fff;
+    text-shadow:0 2px 30px rgba(255,226,122,.25);
+    margin-bottom:8px;
+  }
+  .title .strike{position:relative;display:inline-block;color:#ffd3dc}
+  .title .strike::after{
+    content:"";position:absolute;left:-4%;right:-4%;top:55%;height:3px;
+    background:linear-gradient(90deg,transparent,#ff7a90,transparent);
+    transform:rotate(-4deg);
+  }
+  .title .heart{color:#ff7a90;display:inline-block;animation:beat 1.4s ease-in-out infinite}
+  @keyframes beat{0%,100%{transform:scale(1)}30%{transform:scale(1.25)}60%{transform:scale(.95)}}
+  .sub{opacity:.7;font-size:14px;margin-bottom:36px;max-width:280px}
+  .start{
+    appearance:none;border:0;cursor:pointer;
+    padding:16px 38px;border-radius:999px;font-size:18px;font-weight:600;
+    color:#0b1a14;background:linear-gradient(135deg,#ffe27a,#ffb3c7);
+    box-shadow:0 10px 30px rgba(255,179,199,.35),inset 0 0 0 1px rgba(255,255,255,.4);
+    transition:transform .15s ease, box-shadow .2s ease;
+  }
+  .start:active{transform:scale(.96)}
+  .hint{margin-top:18px;font-size:12px;opacity:.55}
+
+  /* ---------- HUD ---------- */
+  #hud{
+    position:absolute;top:env(safe-area-inset-top,0);left:0;right:0;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 18px;z-index:3;pointer-events:none;
+    font-size:14px;
+  }
+  .pill{
+    background:rgba(0,0,0,.4);backdrop-filter:blur(8px);
+    padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);
+    color:var(--ink);
+  }
+  .pill b{color:var(--glow)}
+
+  /* ---------- Joystick ---------- */
+  #stick{
+    position:absolute;left:24px;bottom:calc(28px + env(safe-area-inset-bottom,0));
+    width:130px;height:130px;border-radius:50%;
+    background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.10), rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.12);
+    z-index:3;touch-action:none;display:none;
+  }
+  #knob{
+    position:absolute;left:50%;top:50%;width:58px;height:58px;border-radius:50%;
+    transform:translate(-50%,-50%);
+    background:linear-gradient(135deg,#ffe27a,#ffb3c7);
+    box-shadow:0 6px 20px rgba(0,0,0,.4);
+  }
+
+  /* ---------- Message ---------- */
+  #msg{
+    position:absolute;inset:0;z-index:4;display:none;
+    align-items:center;justify-content:center;padding:24px;
+    background:rgba(5,10,8,.55);backdrop-filter:blur(10px);
+  }
+  #msg.show{display:flex;animation:fade .3s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .card{
+    max-width:340px;width:100%;
+    background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:24px;padding:28px 24px;text-align:center;
+    box-shadow:0 30px 80px rgba(0,0,0,.5);
+  }
+  .card .emoji{font-size:48px;margin-bottom:10px;display:block;animation:beat 1.6s infinite}
+  .card h3{font-family:Georgia,serif;font-size:22px;margin-bottom:10px;color:#fff}
+  .card p{font-size:15px;line-height:1.5;opacity:.85}
+  .card button{
+    margin-top:18px;appearance:none;border:0;cursor:pointer;
+    padding:12px 26px;border-radius:999px;font-weight:600;
+    color:#0b1a14;background:linear-gradient(135deg,#ffe27a,#ffb3c7);
+  }
+
+  /* ---------- Final ---------- */
+  #final .card .emoji{font-size:64px}
+  .conf{position:absolute;font-size:20px;animation:fall linear infinite;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="game"></canvas>
+
+  <div id="hud">
+    <div class="pill">Found <b id="count">0</b> / <b id="total">8</b></div>
+    <div class="pill">🌲 hates you</div>
+  </div>
+
+  <div id="stick"><div id="knob"></div></div>
+
+  <canvas id="minimap" width="140" height="140" style="position:absolute;right:14px;bottom:calc(20px + env(safe-area-inset-bottom,0));width:120px;height:120px;border-radius:16px;border:1px solid rgba(255,255,255,.15);background:rgba(5,15,10,.55);backdrop-filter:blur(8px);z-index:3;box-shadow:0 8px 24px rgba(0,0,0,.4)"></canvas>
+
+  <div id="login">
+    <div class="leaves" id="leaves"></div>
+    <h1 class="title">
+      <span class="strike">Tree hates You</span><br/>
+      But <span class="heart">♥</span> I do love U
+    </h1>
+    <p class="sub">A tiny forest, a small soul, and eight little reasons hidden between the leaves.</p>
+    <button class="start" id="startBtn">Enter the forest</button>
+    <p class="hint">Tap & drag anywhere to move • Walk into glowing symbols</p>
+  </div>
+
+  <div id="msg"><div class="card">
+    <span class="emoji" id="mEmoji">✨</span>
+    <h3 id="mTitle">Title</h3>
+    <p id="mText">Text</p>
+    <button id="mClose">Keep exploring</button>
+  </div></div>
+
+  <div id="final"><div class="card" style="display:none"></div></div>
+</div>
+
+<script>
+(() => {
+  // Floating leaves on login
+  const leaves = document.getElementById('leaves');
+  const leafChars = ['🍃','🌿','🍂','🌱'];
+  for(let i=0;i<18;i++){
+    const s=document.createElement('span');
+    s.className='leaf';
+    s.textContent=leafChars[i%leafChars.length];
+    s.style.left=Math.random()*100+'vw';
+    s.style.animationDuration=(6+Math.random()*8)+'s';
+    s.style.animationDelay=(-Math.random()*10)+'s';
+    s.style.fontSize=(14+Math.random()*18)+'px';
+    leaves.appendChild(s);
+  }
+
+  const cvs = document.getElementById('game');
+  const ctx = cvs.getContext('2d');
+  let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+  function resize(){
+    W=window.innerWidth; H=window.innerHeight;
+    cvs.width=W*DPR; cvs.height=H*DPR;
+    cvs.style.width=W+'px'; cvs.style.height=H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  resize();
+  window.addEventListener('resize',resize);
+
+  // World
+  const WORLD = { w: 1600, h: 1600 };
+  const player = { x: WORLD.w/2, y: WORLD.h/2, r: 14, vx:0, vy:0, speed: 3.0, face:1, step:0 };
+
+  // RNG seeded
+  function rand(seed){return function(){seed=(seed*9301+49297)%233280;return seed/233280}}
+  const rnd = rand(42);
+
+  // Decor: trees, bushes, flowers, rocks
+  const trees=[], bushes=[], flowers=[], rocks=[], grass=[];
+  for(let i=0;i<140;i++){
+    trees.push({x:rnd()*WORLD.w,y:rnd()*WORLD.h,s:30+rnd()*30,t:rnd()<.3?1:0});
+  }
+  for(let i=0;i<80;i++)bushes.push({x:rnd()*WORLD.w,y:rnd()*WORLD.h,s:18+rnd()*12});
+  for(let i=0;i<200;i++)flowers.push({x:rnd()*WORLD.w,y:rnd()*WORLD.h,c:['#ffb3c7','#ffe27a','#c9b3ff','#fff'][Math.floor(rnd()*4)]});
+  for(let i=0;i<40;i++)rocks.push({x:rnd()*WORLD.w,y:rnd()*WORLD.h,s:10+rnd()*14});
+  for(let i=0;i<600;i++)grass.push({x:rnd()*WORLD.w,y:rnd()*WORLD.h});
+
+  // Symbols / collectibles
+  const messages = [
+    {e:"💌", t:"A Little Note", p:"The tree may rustle and grumble, but the wind carries my whisper: you are loved, exactly as you are."},
+    {e:"⭐", t:"You Shine", p:"Even in this dark forest the stars came down low — they wanted a closer look at you."},
+    {e:"🌸", t:"Soft Things", p:"You make hard days feel like petals. Slow, gentle, and impossibly kind."},
+    {e:"🔥", t:"Quiet Fire", p:"There's a small fire inside you that never asks for permission to burn. I love watching it."},
+    {e:"🎵", t:"Your Song", p:"You hum without knowing it. The forest learned the tune and now the birds steal it daily."},
+    {e:"🫧", t:"Breathe", p:"Inhale. The trees are just trees. Exhale. You are still loved on the other side of that breath."},
+    {e:"🗝️", t:"The Key", p:"You unlocked something in me I didn't know was a door. I'm still figuring out the room."},
+    {e:"♥", t:"And Finally —", p:"The tree hates you. That's fine. I'll love you loud enough for the whole forest to hear."},
+  ];
+  const items = messages.map((m,i)=>({
+    x: 200 + (i*173)%1200 + rnd()*120,
+    y: 220 + Math.floor(i/3)*420 + rnd()*120,
+    got:false, idx:i, pulse: rnd()*Math.PI*2
+  }));
+  document.getElementById('total').textContent = items.length;
+
+  // Input — drag-anywhere joystick
+  const stick = document.getElementById('stick');
+  const knob  = document.getElementById('knob');
+  let touchId=null, tStart={x:0,y:0}, dir={x:0,y:0};
+
+  function pointerDown(e){
+    if(login.style.display!=='none')return;
+    const t = e.touches? e.touches[0]: e;
+    touchId = e.touches? t.identifier : 'mouse';
+    tStart.x=t.clientX; tStart.y=t.clientY;
+    stick.style.display='block';
+    stick.style.left=(t.clientX-65)+'px';
+    stick.style.bottom='auto';
+    stick.style.top=(t.clientY-65)+'px';
+    knob.style.left='50%'; knob.style.top='50%';
+  }
+  function pointerMove(e){
+    if(touchId===null)return;
+    let t;
+    if(e.touches){
+      for(const x of e.touches) if(x.identifier===touchId){t=x;break;}
+      if(!t)return;
+    } else t=e;
+    const dx=t.clientX-tStart.x, dy=t.clientY-tStart.y;
+    const d=Math.hypot(dx,dy), max=55;
+    const k = d>max? max/d : 1;
+    const kx=dx*k, ky=dy*k;
+    knob.style.left=(65+kx)+'px';
+    knob.style.top=(65+ky)+'px';
+    dir.x = kx/max; dir.y = ky/max;
+    e.preventDefault();
+  }
+  function pointerUp(e){
+    touchId=null; dir.x=0; dir.y=0; stick.style.display='none';
+  }
+  cvs.addEventListener('touchstart',pointerDown,{passive:false});
+  cvs.addEventListener('touchmove',pointerMove,{passive:false});
+  cvs.addEventListener('touchend',pointerUp);
+  cvs.addEventListener('mousedown',pointerDown);
+  window.addEventListener('mousemove',pointerMove);
+  window.addEventListener('mouseup',pointerUp);
+
+  // Keyboard fallback
+  const keys={};
+  window.addEventListener('keydown',e=>keys[e.key.toLowerCase()]=1);
+  window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=0);
+
+  // Camera
+  const cam = {x:0,y:0};
+
+  // Drawing helpers
+  function drawTree(t,sx,sy){
+    const s=t.s;
+    ctx.fillStyle='rgba(0,0,0,.25)';
+    ctx.beginPath();ctx.ellipse(sx,sy+s*0.9,s*0.7,s*0.18,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#5b3a22';
+    ctx.fillRect(sx-s*0.12,sy-s*0.2,s*0.24,s*1.0);
+    const c1 = t.t? '#9bd47e':'#7fc36b';
+    const c2 = t.t? '#4ea05a':'#3f8b4a';
+    ctx.fillStyle=c2;
+    ctx.beginPath();ctx.arc(sx,sy-s*0.4,s*0.95,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=c1;
+    ctx.beginPath();ctx.arc(sx-s*0.35,sy-s*0.6,s*0.55,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(sx+s*0.35,sy-s*0.55,s*0.5,0,Math.PI*2);ctx.fill();
+  }
+
+  // Game loop
+  // Minimap
+  const mini = document.getElementById('minimap');
+  const mctx = mini.getContext('2d');
+  let pingT = 0;
+  function drawMinimap(){
+    const MW=mini.width, MH=mini.height;
+    mctx.clearRect(0,0,MW,MH);
+    // bg
+    mctx.fillStyle='rgba(20,45,30,.85)';
+    mctx.fillRect(0,0,MW,MH);
+    const sx = MW/WORLD.w, sy = MH/WORLD.h;
+    // trees as faint dots
+    mctx.fillStyle='rgba(127,195,107,.35)';
+    for(let i=0;i<trees.length;i+=2){
+      const t=trees[i];
+      mctx.fillRect(t.x*sx, t.y*sy, 1.5, 1.5);
+    }
+    // items — pulsing yellow dots
+    pingT += 0.08;
+    for(const it of items){
+      if(it.got){
+        mctx.fillStyle='rgba(255,255,255,.25)';
+        mctx.beginPath();mctx.arc(it.x*sx,it.y*sy,2,0,Math.PI*2);mctx.fill();
+      } else {
+        const p = 2 + Math.sin(pingT+it.idx)*1.2;
+        mctx.fillStyle='rgba(255,226,122,.25)';
+        mctx.beginPath();mctx.arc(it.x*sx,it.y*sy,p+3,0,Math.PI*2);mctx.fill();
+        mctx.fillStyle='#ffe27a';
+        mctx.beginPath();mctx.arc(it.x*sx,it.y*sy,2.2,0,Math.PI*2);mctx.fill();
+      }
+    }
+    // viewport rect
+    mctx.strokeStyle='rgba(255,255,255,.25)';
+    mctx.lineWidth=1;
+    mctx.strokeRect(cam.x*sx, cam.y*sy, W*sx, H*sy);
+    // player
+    mctx.fillStyle='#ffb3c7';
+    mctx.beginPath();mctx.arc(player.x*sx,player.y*sy,3.2,0,Math.PI*2);mctx.fill();
+    mctx.strokeStyle='#fff';mctx.lineWidth=1.2;mctx.stroke();
+  }
+
+  let last=performance.now();
+  function loop(now){
+    const dt = Math.min(32, now-last)/16.6; last=now;
+
+    // movement
+    let mx=dir.x, my=dir.y;
+    if(keys['arrowup']||keys['w'])my=-1;
+    if(keys['arrowdown']||keys['s'])my=1;
+    if(keys['arrowleft']||keys['a'])mx=-1;
+    if(keys['arrowright']||keys['d'])mx=1;
+    const m=Math.hypot(mx,my);
+    if(m>0){
+      player.vx = (mx/m) * player.speed * Math.min(1,m);
+      player.vy = (my/m) * player.speed * Math.min(1,m);
+      if(mx!==0) player.face = mx>0?1:-1;
+      player.step += 0.25*dt;
+    } else {
+      player.vx*=0.8; player.vy*=0.8;
+      player.step *= 0.9;
+    }
+    player.x = Math.max(20, Math.min(WORLD.w-20, player.x + player.vx*dt));
+    player.y = Math.max(20, Math.min(WORLD.h-20, player.y + player.vy*dt));
+
+    // camera
+    cam.x += ((player.x - W/2) - cam.x)*0.12;
+    cam.y += ((player.y - H/2) - cam.y)*0.12;
+    cam.x = Math.max(0, Math.min(WORLD.w-W, cam.x));
+    cam.y = Math.max(0, Math.min(WORLD.h-H, cam.y));
+
+    // ---- draw ground ----
+    ctx.fillStyle='#1d3a2a';
+    ctx.fillRect(0,0,W,H);
+    // ground gradient overlay
+    const g = ctx.createRadialGradient(W/2,H/2,50,W/2,H/2,Math.max(W,H));
+    g.addColorStop(0,'rgba(255,255,255,.04)');
+    g.addColorStop(1,'rgba(0,0,0,.45)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+    // grass
+    ctx.strokeStyle='rgba(160,210,140,.35)';
+    ctx.lineWidth=1;
+    for(const gr of grass){
+      const sx=gr.x-cam.x, sy=gr.y-cam.y;
+      if(sx<-10||sy<-10||sx>W+10||sy>H+10)continue;
+      ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx,sy-4);ctx.stroke();
+    }
+    // flowers
+    for(const f of flowers){
+      const sx=f.x-cam.x, sy=f.y-cam.y;
+      if(sx<-10||sy<-10||sx>W+10||sy>H+10)continue;
+      ctx.fillStyle=f.c;
+      ctx.beginPath();ctx.arc(sx,sy,2.2,0,Math.PI*2);ctx.fill();
+    }
+    // rocks
+    for(const r of rocks){
+      const sx=r.x-cam.x, sy=r.y-cam.y;
+      if(sx<-40||sy<-40||sx>W+40||sy>H+40)continue;
+      ctx.fillStyle='#3a4a44';
+      ctx.beginPath();ctx.ellipse(sx,sy,r.s,r.s*0.7,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#566660';
+      ctx.beginPath();ctx.ellipse(sx-r.s*0.2,sy-r.s*0.25,r.s*0.6,r.s*0.4,0,0,Math.PI*2);ctx.fill();
+    }
+    // bushes
+    for(const b of bushes){
+      const sx=b.x-cam.x, sy=b.y-cam.y;
+      if(sx<-60||sy<-60||sx>W+60||sy>H+60)continue;
+      ctx.fillStyle='#2f6b3f';
+      ctx.beginPath();ctx.arc(sx,sy,b.s,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#3f8b4a';
+      ctx.beginPath();ctx.arc(sx-b.s*0.3,sy-b.s*0.3,b.s*0.7,0,Math.PI*2);ctx.fill();
+    }
+
+    // sort drawables (trees + player + items) by y for depth
+    const draws = [];
+    for(const t of trees){
+      const sx=t.x-cam.x, sy=t.y-cam.y;
+      if(sx<-100||sy<-150||sx>W+100||sy>H+150)continue;
+      draws.push({y:t.y, fn:()=>drawTree(t,sx,sy)});
+    }
+    // items
+    for(const it of items){
+      if(it.got)continue;
+      const sx=it.x-cam.x, sy=it.y-cam.y;
+      if(sx<-60||sy<-60||sx>W+60||sy>H+60)continue;
+      it.pulse += 0.06*dt;
+      const pulse = 1+Math.sin(it.pulse)*0.12;
+      draws.push({y:it.y, fn:()=>{
+        // glow
+        const rg = ctx.createRadialGradient(sx,sy,2,sx,sy,40*pulse);
+        rg.addColorStop(0,'rgba(255,226,122,.55)');
+        rg.addColorStop(1,'rgba(255,226,122,0)');
+        ctx.fillStyle=rg;
+        ctx.beginPath();ctx.arc(sx,sy,40*pulse,0,Math.PI*2);ctx.fill();
+        ctx.font = (28*pulse)+'px serif';
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(messages[it.idx].e, sx, sy);
+      }});
+    }
+    // player — penguin 🐧
+    draws.push({y:player.y, fn:()=>{
+      const sx=player.x-cam.x, sy=player.y-cam.y;
+      const f = player.face;
+      // shadow
+      ctx.fillStyle='rgba(0,0,0,.35)';
+      ctx.beginPath();ctx.ellipse(sx,sy+16,14,4,0,0,Math.PI*2);ctx.fill();
+      const bob = Math.sin(player.step)*2;
+      const waddle = Math.sin(player.step)*0.12;
+      ctx.save();
+      ctx.translate(sx, sy+bob);
+      ctx.rotate(waddle);
+      // feet
+      ctx.fillStyle='#ff9a3c';
+      ctx.beginPath();ctx.ellipse(-5,15,5,3,0,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.ellipse(5,15,5,3,0,0,Math.PI*2);ctx.fill();
+      // body (black)
+      ctx.fillStyle='#1a1a22';
+      ctx.beginPath();ctx.ellipse(0,2,12,15,0,0,Math.PI*2);ctx.fill();
+      // white belly
+      ctx.fillStyle='#fafafa';
+      ctx.beginPath();ctx.ellipse(0,4,8,11,0,0,Math.PI*2);ctx.fill();
+      // wings
+      ctx.fillStyle='#0f0f16';
+      ctx.beginPath();ctx.ellipse(-11,3,3,9,-0.2,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.ellipse(11,3,3,9,0.2,0,Math.PI*2);ctx.fill();
+      // head
+      ctx.fillStyle='#1a1a22';
+      ctx.beginPath();ctx.arc(0,-10,9,0,Math.PI*2);ctx.fill();
+      // face patch
+      ctx.fillStyle='#fafafa';
+      ctx.beginPath();ctx.ellipse(0,-8,6.5,5.5,0,0,Math.PI*2);ctx.fill();
+      // eyes
+      ctx.fillStyle='#111';
+      ctx.beginPath();ctx.arc(-2.5+f*0.5,-10,1.6,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(2.5+f*0.5,-10,1.6,0,Math.PI*2);ctx.fill();
+      // eye sparkle
+      ctx.fillStyle='#fff';
+      ctx.beginPath();ctx.arc(-2+f*0.5,-10.6,0.5,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(3+f*0.5,-10.6,0.5,0,Math.PI*2);ctx.fill();
+      // beak
+      ctx.fillStyle='#ff9a3c';
+      ctx.beginPath();
+      ctx.moveTo(f*1,-6);
+      ctx.lineTo(f*7,-5);
+      ctx.lineTo(f*1,-3);
+      ctx.closePath();ctx.fill();
+      ctx.fillStyle='#d97a26';
+      ctx.beginPath();
+      ctx.moveTo(f*1,-4);
+      ctx.lineTo(f*6,-4.2);
+      ctx.lineTo(f*1,-3);
+      ctx.closePath();ctx.fill();
+      // blush
+      ctx.fillStyle='rgba(255,140,160,.55)';
+      ctx.beginPath();ctx.arc(-5,-7,1.8,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(5,-7,1.8,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    }});
+    draws.sort((a,b)=>a.y-b.y);
+    for(const d of draws) d.fn();
+
+    // vignette
+    const vg = ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.75);
+    vg.addColorStop(0,'rgba(0,0,0,0)');
+    vg.addColorStop(1,'rgba(0,0,0,.55)');
+    ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+
+    // ---- minimap ----
+    drawMinimap();
+
+    // collision with items
+    for(const it of items){
+      if(it.got)continue;
+      const dx=it.x-player.x, dy=it.y-player.y;
+      if(dx*dx+dy*dy < 28*28){
+        it.got=true;
+        collected();
+        showMessage(it.idx);
+      }
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  // UI
+  const login = document.getElementById('login');
+  const startBtn = document.getElementById('startBtn');
+  const msg = document.getElementById('msg');
+  const mEmoji = document.getElementById('mEmoji');
+  const mTitle = document.getElementById('mTitle');
+  const mText  = document.getElementById('mText');
+  const mClose = document.getElementById('mClose');
+  const countEl= document.getElementById('count');
+  let count=0;
+
+  function showMessage(i){
+    const m = messages[i];
+    mEmoji.textContent = m.e;
+    mTitle.textContent = m.t;
+    mText.textContent  = m.p;
+    msg.classList.add('show');
+    mClose.textContent = (count===items.length)? 'Finish ♥' : 'Keep exploring';
+  }
+  mClose.addEventListener('click', ()=>{
+    msg.classList.remove('show');
+    if(count===items.length) showFinal();
+  });
+  function collected(){
+    count++;
+    countEl.textContent=count;
+  }
+
+  function showFinal(){
+    // confetti leaves+hearts
+    const wrap=document.createElement('div');
+    wrap.style.cssText='position:fixed;inset:0;z-index:10;pointer-events:none;overflow:hidden';
+    const chars=['♥','🌸','🍃','⭐','✨'];
+    for(let i=0;i<60;i++){
+      const s=document.createElement('span');
+      s.className='conf';
+      s.textContent=chars[i%chars.length];
+      s.style.left=Math.random()*100+'vw';
+      s.style.animationDuration=(3+Math.random()*4)+'s';
+      s.style.animationDelay=(-Math.random()*2)+'s';
+      s.style.fontSize=(14+Math.random()*18)+'px';
+      s.style.color=['#ffb3c7','#ffe27a','#fff'][i%3];
+      wrap.appendChild(s);
+    }
+    document.body.appendChild(wrap);
+
+    const overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;z-index:11;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(5,10,8,.65);backdrop-filter:blur(10px)';
+    overlay.innerHTML=`
+      <div class="card" style="max-width:360px;background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.15);border-radius:24px;padding:32px 26px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.6)">
+        <div style="font-size:64px;animation:beat 1.4s infinite">♥</div>
+        <h2 style="font-family:Georgia,serif;color:#fff;font-size:26px;margin:8px 0 12px">You found them all.</h2>
+        <p style="opacity:.85;line-height:1.55">Eight little reasons, scattered between trees that pretended not to care. The forest can keep its grudge — I'll keep loving you.</p>
+        <p style="margin-top:14px;font-style:italic;opacity:.7">— from me, with the whole forest as witness</p>
+        <button id="again" style="margin-top:22px;appearance:none;border:0;cursor:pointer;padding:12px 26px;border-radius:999px;font-weight:600;color:#0b1a14;background:linear-gradient(135deg,#ffe27a,#ffb3c7)">Walk again</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#again').onclick=()=>{
+      overlay.remove(); wrap.remove();
+      for(const it of items) it.got=false;
+      count=0; countEl.textContent=0;
+      player.x=WORLD.w/2; player.y=WORLD.h/2;
+    };
+  }
+
+  startBtn.addEventListener('click',()=>{
+    login.style.opacity='0';
+    login.style.transition='opacity .5s';
+    setTimeout(()=>login.style.display='none',500);
+    requestAnimationFrame(loop);
+  });
+})();
+</script>
+</body>
+</html>
