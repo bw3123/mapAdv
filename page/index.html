@@ -209,14 +209,14 @@
 
   // Symbols / collectibles
   const messages = [
-    {e:"💌", t:"A Little Note", p:"The tree may rustle and grumble, but the wind carries my whisper: you are loved, exactly as you are."},
-    {e:"⭐", t:"You Shine", p:"Even in this dark forest the stars came down low — they wanted a closer look at you."},
-    {e:"🌸", t:"Soft Things", p:"You make hard days feel like petals. Slow, gentle, and impossibly kind."},
-    {e:"🔥", t:"Quiet Fire", p:"There's a small fire inside you that never asks for permission to burn. I love watching it."},
-    {e:"🎵", t:"Your Song", p:"You hum without knowing it. The forest learned the tune and now the birds steal it daily."},
-    {e:"🫧", t:"Breathe", p:"Inhale. The trees are just trees. Exhale. You are still loved on the other side of that breath."},
-    {e:"🗝️", t:"The Key", p:"You unlocked something in me I didn't know was a door. I'm still figuring out the room."},
-    {e:"♥", t:"And Finally —", p:"The tree hates you. That's fine. I'll love you loud enough for the whole forest to hear."},
+    {e:"💌", t:"Cats toys", p:"lil something to our kids"},
+    {e:"⭐", t:"keychain", p:"that one suits u cus u r cooking ;)"},
+    {e:"🌸", t:"stickers", p:"u can have one or all its up to u"},
+    {e:"🔥", t:"sticky notes", p:"iy have to be cats too uk"},
+    {e:"🎵", t:"ice coffee", p:"something delicious with low cal and sugar for u XD"},
+    {e:"🫧", t:"special gift", p:"something i thought u would like"},
+    {e:"🗝️", t:"special gift", p:"is small thing cus u deserve more"},
+    {e:"♥", t:"special gift", p:"that's the beginning only"},
   ];
   const items = messages.map((m,i)=>({
     x: 200 + (i*173)%1200 + rnd()*120,
@@ -566,12 +566,37 @@
     overlay.style.cssText='position:fixed;inset:0;z-index:11;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(5,10,8,.65);backdrop-filter:blur(10px)';
     overlay.innerHTML=`
       <div class="card" style="max-width:360px;background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.15);border-radius:24px;padding:32px 26px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.6)">
-        <div style="font-size:64px;animation:beat 1.4s infinite">♥</div>
-        <h2 style="font-family:Georgia,serif;color:#fff;font-size:26px;margin:8px 0 12px">You found them all.</h2>
-        <p style="opacity:.85;line-height:1.55">Eight little reasons, scattered between trees that pretended not to care. The forest can keep its grudge — I'll keep loving you.</p>
-        <p style="margin-top:14px;font-style:italic;opacity:.7">— from me, with the whole forest as witness</p>
-        <button id="again" style="margin-top:22px;appearance:none;border:0;cursor:pointer;padding:12px 26px;border-radius:999px;font-weight:600;color:#0b1a14;background:linear-gradient(135deg,#ffe27a,#ffb3c7)">Walk again</button>
-      </div>`;
+          <div style="font-size:64px;animation:beat 1.4s infinite">♥</div>
+
+          <h2 style="font-family:Georgia,serif;color:#fff;font-size:26px;margin:8px 0 12px">
+              You found them all.
+          </h2>
+
+          <p style="opacity:.85;line-height:1.55">
+              And now you will get the biggest gift of them all, and I hope you will love it because I will love you forever.
+          </p>
+
+          <div style="margin:20px 0;border-radius:16px;overflow:hidden">
+              <iframe
+                  width="100%"
+                  height="420"
+                  src="https://www.youtube.com/embed/EA2YrMBZfI8"
+                  title="Special Gift"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen>
+              </iframe>
+          </div>
+
+          <p style="margin-top:14px;font-style:italic;opacity:.7">
+              — from me, with the whole forest as witness
+          </p>
+
+          <button id="again"
+              style="margin-top:22px;appearance:none;border:0;cursor:pointer;padding:12px 26px;border-radius:999px;font-weight:600;color:#0b1a14;background:linear-gradient(135deg,#ffe27a,#ffb3c7)">
+              Walk again
+          </button>
+      </div>
     document.body.appendChild(overlay);
     overlay.querySelector('#again').onclick=()=>{
       overlay.remove(); wrap.remove();
